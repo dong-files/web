@@ -4,6 +4,8 @@ import Base from "../layouts/Base.astro";
 
 <Base title="Dong Web">
   <script>
+    import { ViewTransitions } from "astro:transitions";
+
     class CreateDong extends HTMLElement {
       connectedCallback() {
         const shadow = this.attachShadow({ mode: "open" });
@@ -26,6 +28,91 @@ import Base from "../layouts/Base.astro";
         form.appendChild(createButton);
 
         shadow.appendChild(form);
+
+        // functionality
+        createButton.addEventListener("click", async (e) => {
+          // dont refresh
+          e.preventDefault();
+          // quit early if no files
+          if (
+            !imageSelect.files ||
+            !audioSelect.files ||
+            imageSelect.files.length === 0 ||
+            audioSelect.files.length === 0
+          )
+            return console.warn("No files selected");
+
+          // get files
+          const image = imageSelect.files[0];
+          const audio = audioSelect.files[0];
+
+          if (image.type === "" || audio.type === "")
+            return console.warn("Mime types invalid");
+
+          console.log(
+            image.size,
+            audio.size,
+            await image.bytes(),
+            await audio.bytes()
+          );
+
+          const dongFile = new File(
+            [
+              // version
+              (() => {
+                const version = new Int8Array(new ArrayBuffer(2));
+                version[0] = 0xd0;
+                version[1] = 2;
+                return version;
+              })(),
+              // image type
+              image.type,
+              // 00 padding
+              new ArrayBuffer(256 - image.type.length),
+              // image size
+              (() => {
+                const value = new Uint32Array(1);
+                value[0] = image.size;
+                return value;
+              })(),
+              // audio type
+              audio.type,
+              // 00 padding
+              new ArrayBuffer(256 - audio.type.length),
+              // audio size
+              (() => {
+                const value = new Uint32Array(1);
+                value[0] = audio.size;
+                return value;
+              })(),
+              // image data
+              await image.bytes(),
+              // audio data
+              await audio.bytes(),
+            ],
+            `${prompt("Filename:") ?? "file"}.dong`,
+            {
+              type: "application/prs.vielle.dong",
+            }
+          );
+
+          console.log(
+            dongFile,
+            dongFile.size,
+            await dongFile.text(),
+            await dongFile.bytes()
+          );
+
+          // download the dong file
+          const url = URL.createObjectURL(dongFile);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = dongFile.name;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
       }
     }
 
@@ -68,4 +155,23 @@ import Base from "../layouts/Base.astro";
 
   <create-dong></create-dong>
   <load-dong></load-dong>
+
+  <!-- <form action="">
+    <label for="image">
+      Pick an image file
+      <input type="file" id="image" name="image" accept="image/*" />
+    </label>
+    <label for="audio">
+      Pick an audio file
+      <input type="file" id="audio" name="audio" accept="audio/*" />
+    </label>
+    <button id="create">Create</button>
+  </form> -->
+  <!-- <form action="">
+    <label>
+      Pick a dong file
+      <input type="file" id="dong" name="dong" accept=".dong" />
+    </label>
+    <canvas id="renderer"></canvas>
+  </form> -->
 </Base>
