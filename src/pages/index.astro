@@ -4,7 +4,11 @@ import Base from "../layouts/Base.astro";
 
 <Base title="Dong Web">
   <script>
-    import { ViewTransitions } from "astro:transitions";
+    declare global {
+      interface Uint8Array {
+        toBase64(): string;
+      }
+    }
 
     class CreateDong extends HTMLElement {
       connectedCallback() {
@@ -31,7 +35,7 @@ import Base from "../layouts/Base.astro";
 
         // functionality
         createButton.addEventListener("click", async (e) => {
-          // dont refresh
+          // don't refresh
           e.preventDefault();
           // quit early if no files
           if (
@@ -73,6 +77,7 @@ import Base from "../layouts/Base.astro";
               (() => {
                 const value = new Uint32Array(1);
                 value[0] = image.size;
+                console.log("image size: ", image.size, value);
                 return value;
               })(),
               // audio type
@@ -83,6 +88,7 @@ import Base from "../layouts/Base.astro";
               (() => {
                 const value = new Uint32Array(1);
                 value[0] = audio.size;
+                console.log("audio size: ", audio.size, value);
                 return value;
               })(),
               // image data
@@ -124,28 +130,95 @@ import Base from "../layouts/Base.astro";
         const form = document.createElement("form");
         const dongSelect = document.createElement("input");
         const loadButton = document.createElement("button");
-        // canvas
-        const canvas = document.createElement("canvas");
+        // image
+        const image = document.createElement("img");
 
         dongSelect.type = "file";
         dongSelect.accept = ".dong";
         loadButton.type = "submit";
         loadButton.textContent = "Load";
+        image.width = 256;
+        image.height = 256;
 
         form.appendChild(dongSelect);
         form.appendChild(loadButton);
 
         shadow.appendChild(form);
-        shadow.appendChild(canvas);
+        shadow.appendChild(image);
 
         const sheet = new CSSStyleSheet();
         sheet.replaceSync(`
-            canvas {
+            image {
                 border: 1px solid white;
             }
         `);
 
         shadow.adoptedStyleSheets = [sheet];
+
+        // functionality
+        loadButton.addEventListener("click", async (e) => {
+          // don't refresh
+          e.preventDefault();
+          // quit early if no files
+          if (!dongSelect.files || dongSelect.files.length === 0)
+            return console.warn("No files selected");
+
+          // get files
+          const dongFile = dongSelect.files[0];
+
+          console.log(dongFile, dongFile.size); //, await dongFile.bytes());
+
+          // get first 2 bytes and verify
+          const version = new Uint8Array(await dongFile.slice(0, 2).bytes());
+          if (version[0] !== 0xd0 || version[1] !== 2)
+            return console.warn("Invalid file");
+
+          // get next 256 bytes and get mime type
+          const imgMimeType: string | undefined = (
+            await dongFile.slice(2, 258).text()
+          ).match(/[a-zA-Z0-9.]+\/[a-zA-Z0-9.]+/gm)?.[0];
+          if (!imgMimeType) return console.warn("Image mime type parse failed");
+
+          // get next 4 bytes and get image size
+          const imgSize = new Uint32Array(
+            (await dongFile.slice(258, 262).bytes()).buffer
+          )[0];
+
+          // get next 256 bytes and get mime type
+          const audMimeType: string | undefined = (
+            await dongFile.slice(262, 518).text()
+          ).match(/[a-zA-Z0-9.]+\/[a-zA-Z0-9.]+/gm)?.[0];
+          if (!audMimeType) return console.warn("Audio mime type parse failed");
+
+          // get next 4 bytes and get image size
+          const audSize = new Uint32Array(
+            (await dongFile.slice(518, 522).bytes()).buffer
+          )[0];
+
+          const imageBytes = await dongFile.slice(522, 522 + imgSize).bytes();
+          const audioBytes = await dongFile
+            .slice(522 + imgSize, 522 + imgSize + audSize)
+            .bytes();
+
+          image.src = `data:${imgMimeType};base64,${imageBytes.toBase64()}`;
+
+          // audio play
+          const audio = document.createElement("audio");
+          audio.src = `data:${audMimeType};base64,${audioBytes.toBase64()}`;
+          audio.play();
+
+          console.log(
+            imgMimeType,
+            audMimeType,
+            imgSize,
+            audSize,
+            imageBytes,
+            audioBytes,
+            btoa(String.fromCharCode(...imageBytes)),
+            image,
+            shadow
+          );
+        });
       }
     }
 
