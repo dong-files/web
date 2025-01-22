@@ -1,0 +1,15 @@
+{
+  "name": "dong-web",
+  "type": "module",
+  "version": "0.0.1",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "dev": "astro dev --port 3000 --host",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^5.1.8"
+  }
+}
