@@ -2,4 +2,70 @@
 import Base from "../layouts/Base.astro";
 ---
 
-<Base title="Dong Web"> Hello World</Base>
+<Base title="Dong Web">
+  <script>
+    class CreateDong extends HTMLElement {
+      connectedCallback() {
+        const shadow = this.attachShadow({ mode: "open" });
+
+        // create input
+        const form = document.createElement("form");
+        const imageSelect = document.createElement("input");
+        const audioSelect = document.createElement("input");
+        const createButton = document.createElement("button");
+
+        imageSelect.type = "file";
+        imageSelect.accept = "image/*";
+        audioSelect.type = "file";
+        audioSelect.accept = "audio/*";
+        createButton.type = "submit";
+        createButton.textContent = "Create";
+
+        form.appendChild(imageSelect);
+        form.appendChild(audioSelect);
+        form.appendChild(createButton);
+
+        shadow.appendChild(form);
+      }
+    }
+
+    class LoadDong extends HTMLElement {
+      connectedCallback() {
+        const shadow = this.attachShadow({ mode: "open" });
+
+        // create input
+        const form = document.createElement("form");
+        const dongSelect = document.createElement("input");
+        const loadButton = document.createElement("button");
+        // canvas
+        const canvas = document.createElement("canvas");
+
+        dongSelect.type = "file";
+        dongSelect.accept = ".dong";
+        loadButton.type = "submit";
+        loadButton.textContent = "Load";
+
+        form.appendChild(dongSelect);
+        form.appendChild(loadButton);
+
+        shadow.appendChild(form);
+        shadow.appendChild(canvas);
+
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(`
+            canvas {
+                border: 1px solid white;
+            }
+        `);
+
+        shadow.adoptedStyleSheets = [sheet];
+      }
+    }
+
+    customElements.define("create-dong", CreateDong);
+    customElements.define("load-dong", LoadDong);
+  </script>
+
+  <create-dong></create-dong>
+  <load-dong></load-dong>
+</Base>
