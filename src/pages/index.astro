@@ -10,6 +10,28 @@ import Base from "../layouts/Base.astro";
       }
     }
 
+    const blobBytes = async (blob: Blob) => {
+      if ("bytes" in blob) return blob.bytes();
+      return new Response(blob).arrayBuffer().then((buffer) => {
+        const uint = new Uint8Array(buffer);
+        return uint;
+      });
+    };
+
+    const uint8array64 = (arru8: Uint8Array) => {
+      if ("toBase64" in arru8) return arru8.toBase64();
+
+      function _arrayBufferToBase64(bytes: Uint8Array) {
+        var binary = "";
+        var len = bytes.byteLength;
+        for (var i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+      }
+      return _arrayBufferToBase64(arru8);
+    };
+
     class CreateDong extends HTMLElement {
       connectedCallback() {
         const shadow = this.attachShadow({ mode: "open" });
@@ -53,13 +75,6 @@ import Base from "../layouts/Base.astro";
           if (image.type === "" || audio.type === "")
             return console.warn("Mime types invalid");
 
-          console.log(
-            image.size,
-            audio.size,
-            await image.bytes(),
-            await audio.bytes()
-          );
-
           const dongFile = new File(
             [
               // version
@@ -77,7 +92,6 @@ import Base from "../layouts/Base.astro";
               (() => {
                 const value = new Uint32Array(1);
                 value[0] = image.size;
-                console.log("image size: ", image.size, value);
                 return value;
               })(),
               // audio type
@@ -88,25 +102,17 @@ import Base from "../layouts/Base.astro";
               (() => {
                 const value = new Uint32Array(1);
                 value[0] = audio.size;
-                console.log("audio size: ", audio.size, value);
                 return value;
               })(),
               // image data
-              await image.bytes(),
+              await blobBytes(image),
               // audio data
-              await audio.bytes(),
+              await blobBytes(audio),
             ],
             `${prompt("Filename:") ?? "file"}.dong`,
             {
               type: "application/prs.vielle.dong",
             }
-          );
-
-          console.log(
-            dongFile,
-            dongFile.size,
-            await dongFile.text(),
-            await dongFile.bytes()
           );
 
           // download the dong file
@@ -132,6 +138,11 @@ import Base from "../layouts/Base.astro";
         const loadButton = document.createElement("button");
         // image
         const image = document.createElement("img");
+
+        // do not append as this is only for playing audio
+        // loaded here to prevent overlaying the sound
+        const audio = document.createElement("audio");
+
 
         dongSelect.type = "file";
         dongSelect.accept = ".dong";
@@ -166,10 +177,8 @@ import Base from "../layouts/Base.astro";
           // get files
           const dongFile = dongSelect.files[0];
 
-          console.log(dongFile, dongFile.size); //, await dongFile.bytes());
-
           // get first 2 bytes and verify
-          const version = new Uint8Array(await dongFile.slice(0, 2).bytes());
+          const version = new Uint8Array(await blobBytes(dongFile.slice(0, 2)));
           if (version[0] !== 0xd0 || version[1] !== 2)
             return console.warn("Invalid file");
 
@@ -181,7 +190,7 @@ import Base from "../layouts/Base.astro";
 
           // get next 4 bytes and get image size
           const imgSize = new Uint32Array(
-            (await dongFile.slice(258, 262).bytes()).buffer
+            (await blobBytes(dongFile.slice(258, 262))).buffer
           )[0];
 
           // get next 256 bytes and get mime type
@@ -192,32 +201,21 @@ import Base from "../layouts/Base.astro";
 
           // get next 4 bytes and get image size
           const audSize = new Uint32Array(
-            (await dongFile.slice(518, 522).bytes()).buffer
+            (await blobBytes(dongFile.slice(518, 522))).buffer
           )[0];
 
-          const imageBytes = await dongFile.slice(522, 522 + imgSize).bytes();
-          const audioBytes = await dongFile
-            .slice(522 + imgSize, 522 + imgSize + audSize)
-            .bytes();
+          const imageBytes = await blobBytes(
+            dongFile.slice(522, 522 + imgSize)
+          );
+          const audioBytes = await blobBytes(
+            dongFile.slice(522 + imgSize, 522 + imgSize + audSize)
+          );
 
-          image.src = `data:${imgMimeType};base64,${imageBytes.toBase64()}`;
+          image.src = `data:${imgMimeType};base64,${uint8array64(imageBytes)}`;
 
           // audio play
-          const audio = document.createElement("audio");
-          audio.src = `data:${audMimeType};base64,${audioBytes.toBase64()}`;
+          audio.src = `data:${audMimeType};base64,${uint8array64(audioBytes)}`;
           audio.play();
-
-          console.log(
-            imgMimeType,
-            audMimeType,
-            imgSize,
-            audSize,
-            imageBytes,
-            audioBytes,
-            btoa(String.fromCharCode(...imageBytes)),
-            image,
-            shadow
-          );
         });
       }
     }
@@ -235,8 +233,9 @@ import Base from "../layouts/Base.astro";
       href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array/toBase6400"
       >here</a
     >.) Please use firefox, a gecko based browser, safari, or a webkit based
-    browser. (iOs has no issues with this site regardless of browser)<br>
-    Contact me if chrome starts working or you encounter any issues (up to u to figure out how)
+    browser. (iOs has no issues with this site regardless of browser)<br />
+    Contact me if chrome starts working or you encounter any issues (up to u to figure
+    out how)
   </h1>
 
   <create-dong></create-dong>
