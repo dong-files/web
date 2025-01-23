@@ -224,19 +224,21 @@ import Base from "../layouts/Base.astro";
     customElements.define("load-dong", LoadDong);
   </script>
 
+  <style slot="head">
+    ul {
+      padding-left: 3rem;
+    }
+  </style>
+
   <h1>
-    Currently this does not work with chrome or other chromium based browsers
-    (see <a
-      href="https://developer.mozilla.org/en-US/docs/Web/API/Blob/bytes#browser_compatibility"
-      >here</a
-    > and <a
-      href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array/toBase6400"
-      >here</a
-    >.) Please use firefox, a gecko based browser, safari, or a webkit based
-    browser. (iOs has no issues with this site regardless of browser)<br />
-    Contact me if chrome starts working or you encounter any issues (up to u to figure
-    out how)
+    Primarily tested on firefox. Be warned if using iOS/another browser
   </h1>
+
+  <p>Known supported browsers</p>
+  <ul>
+    <li>Firefox (or Gecko based)</li>
+    <li>Chromium (or Chromium based)</li>
+  </ul>
 
   <create-dong></create-dong>
   <load-dong></load-dong>
