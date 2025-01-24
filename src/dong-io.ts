@@ -66,36 +66,13 @@ export const createDong = async (
   ]);
 };
 
-// base 64 overload
 export async function readDong(
   dongFile: File,
-  opts?: { b64: true }
+  
 ): Promise<
   | {
-      image: { data: string; mime: string };
-      audio: { data: string; mime: string };
-    }
-  | string
->;
-// standard overload
-export async function readDong(
-  dongFile: File,
-  opts?: { b64: false }
-): Promise<
-  | {
-      image: { data: Uint8Array; mime: string };
-      audio: { data: Uint8Array; mime: string };
-    }
-  | string
->;
-
-export async function readDong(
-  dongFile: File,
-  opts?: { b64: boolean }
-): Promise<
-  | {
-      image: { data: Uint8Array | string; mime: string };
-      audio: { data: Uint8Array | string; mime: string };
+      image: { data: Uint8Array; b64?: string; mime: string };
+      audio: { data: Uint8Array; b64?: string; mime: string };
     }
   | string
 > {
@@ -133,11 +110,13 @@ export async function readDong(
   return {
     image: {
       mime: imgMimeType,
-      data: opts?.b64 ? uint8array64(imageBytes) : imageBytes,
+      data: uint8array64(imageBytes),
+      b64: uint8array64(imageBytes),
     },
     audio: {
       mime: audMimeType,
-      data: opts?.b64 ? uint8array64(audioBytes) : audioBytes,
+      data: uint8array64(audioBytes),
+      b64: uint8array64(audioBytes),
     },
   };
 }

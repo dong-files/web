@@ -131,7 +131,7 @@ import Base from "../layouts/Base.astro";
 
         // do not append as this is only for playing audio
         // loaded here to prevent overlaying the sound
-        const audio = document.createElement("audio");
+        const audio = new Audio();
 
         dongSelect.type = "file";
         dongSelect.accept = ".dong";
@@ -161,13 +161,13 @@ import Base from "../layouts/Base.astro";
           // get files
           const dongFile = dongSelect.files[0];
 
-          const res = await readDong(dongFile, { b64: true });
+          const res = await readDong(dongFile);
           if (typeof res === "string") {
             errormsg.innerText = res;
             return;
           }
 
-          image.src = `data:${res.image.mime};base64,${res.image.data}`;
+          image.src = `data:${res.image.mime};base64,${res.image.b64}`;
 
           // audio play
           audio.src = `data:${res.audio.mime};base64,${res.audio.data}`;
@@ -190,6 +190,9 @@ import Base from "../layouts/Base.astro";
 
     button {
       background-color: var(--accent);
+      &:empty {
+        display: none;
+      }
     }
 
     body {
