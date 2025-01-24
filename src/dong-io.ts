@@ -12,20 +12,6 @@ const blobBytes = async (blob: Blob) => {
   });
 };
 
-const uint8array64 = (arru8: Uint8Array) => {
-  if ("toBase64" in arru8) return arru8.toBase64();
-
-  function _arrayBufferToBase64(bytes: Uint8Array) {
-    var binary = "";
-    var len = bytes.byteLength;
-    for (var i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
-  }
-  return _arrayBufferToBase64(arru8);
-};
-
 export const createDong = async (
   image: File,
   audio: File
@@ -74,8 +60,8 @@ export const createDong = async (
 
 export async function readDong(dongFile: File): Promise<
   | {
-      image: { data: Uint8Array; b64?: string; mime: string };
-      audio: { data: Uint8Array; b64?: string; mime: string };
+      image: { data: Uint8Array; mime: string };
+      audio: { data: Uint8Array; mime: string };
     }
   | string
 > {
@@ -113,13 +99,11 @@ export async function readDong(dongFile: File): Promise<
   return {
     image: {
       mime: imgMimeType,
-      data: uint8array64(imageBytes),
-      b64: uint8array64(imageBytes),
+      data: imageBytes,
     },
     audio: {
       mime: audMimeType,
-      data: uint8array64(audioBytes),
-      b64: uint8array64(audioBytes),
+      data: audioBytes,
     },
   };
 }

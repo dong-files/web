@@ -5,7 +5,7 @@ import Base from "../layouts/Base.astro";
 <Base title="Dong Web">
   <script>
     import { createDong, download, readDong } from "../dong-io";
-    
+
     class CreateDong extends HTMLElement {
       connectedCallback() {
         // create input
@@ -120,6 +120,11 @@ import Base from "../layouts/Base.astro";
     }
 
     class LoadDong extends HTMLElement {
+      // do not append as this is only for playing audio
+      // loaded here to prevent overlaying the sound
+      image = document.createElement("img");
+      audio = new Audio();
+
       connectedCallback() {
         // create input
         const form = document.createElement("form");
@@ -127,11 +132,6 @@ import Base from "../layouts/Base.astro";
         const dongSelect = document.createElement("input");
         // image
         const errormsg = document.createElement("div");
-        const image = document.createElement("img");
-
-        // do not append as this is only for playing audio
-        // loaded here to prevent overlaying the sound
-        const audio = new Audio();
 
         dongSelect.type = "file";
         dongSelect.accept = ".dong";
@@ -145,7 +145,7 @@ import Base from "../layouts/Base.astro";
         form.appendChild(dongLabel);
 
         this.appendChild(form);
-        this.appendChild(image);
+        this.appendChild(this.image);
         this.appendChild(errormsg);
 
         // functionality
@@ -167,17 +167,47 @@ import Base from "../layouts/Base.astro";
             return;
           }
 
-          image.src = `data:${res.image.mime};base64,${res.image.b64}`;
+          this.image.src = URL.createObjectURL(new Blob([res.image.data]));
 
           // audio play
-          audio.src = `data:${res.audio.mime};base64,${res.audio.data}`;
-          audio.play();
+          this.audio.src = URL.createObjectURL(new Blob([res.audio.data]));
+          this.audio.play();
         });
       }
     }
 
     customElements.define("create-dong", CreateDong);
     customElements.define("load-dong", LoadDong);
+
+    async function handleFile(file: File) {
+      const load_dong = document.getElementById("load") as LoadDong;
+      const res = await readDong(file);
+      if (typeof res === "string") return;
+      load_dong.image.src = URL.createObjectURL(new Blob([res.image.data]));
+      load_dong.audio.src = URL.createObjectURL(new Blob([res.audio.data]));
+      load_dong.audio.play();
+    }
+
+    // if ("LaunchParams" in window && 'launchQueue' in window && 'files' in window.LaunchParams.prototype) {
+    //   window.launchQueue.setConsumer((launchParams) => {
+    //     if (launchParams.files && launchParams.files.length) {
+    //       handleFile(launchParams.files[0]);
+    //     }
+    //   });
+    // }
+
+    if ("launchQueue" in window && "LaunchParams" in window) {
+      (window as any).launchQueue.setConsumer(
+        async (launchParams: { files: any[] }) => {
+          if (!launchParams.files.length) {
+            return;
+          }
+          const fileHandle = launchParams.files[0];
+          const blob: Blob = await fileHandle.getFile();
+          handleFile(new File([blob], "", { type: blob.type }));
+        }
+      );
+    }
   </script>
 
   <style slot="head" is:inline>
@@ -294,10 +324,10 @@ import Base from "../layouts/Base.astro";
   <hr />
 
   <!-- creation -->
-  <create-dong></create-dong>
+  <create-dong id="create"></create-dong>
 
   <hr />
 
   <!-- loading -->
-  <load-dong></load-dong>
+  <load-dong id="load"></load-dong>
 </Base>

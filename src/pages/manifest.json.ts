@@ -470,6 +470,14 @@ export const GET: APIRoute = async ({ params, request }) => {
       start_url: "/",
       display: "standalone",
       prefer_related_applications: false,
+      file_handlers: [
+        {
+          action: "/",
+          accept: {
+            "application/prs.vielle.dong": [".dong"], 
+          }
+        }
+      ]
     }),
     {
       headers: {
