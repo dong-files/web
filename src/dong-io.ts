@@ -30,7 +30,13 @@ export const createDong = async (
   image: File,
   audio: File
 ): Promise<Blob | string> => {
-  if (image.type === "" || audio.type === "") return "Mime types invalid";
+  if (
+    image.type === "" ||
+    !image.type.startsWith("image/") ||
+    audio.type === "" ||
+    !audio.type.startsWith("audio/")
+  )
+    return "Mime types invalid";
   return new Blob([
     // version
     (() => {
@@ -66,10 +72,7 @@ export const createDong = async (
   ]);
 };
 
-export async function readDong(
-  dongFile: File,
-  
-): Promise<
+export async function readDong(dongFile: File): Promise<
   | {
       image: { data: Uint8Array; b64?: string; mime: string };
       audio: { data: Uint8Array; b64?: string; mime: string };
