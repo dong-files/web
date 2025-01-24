@@ -160,10 +160,7 @@ import Base from "../layouts/Base.astro";
           image.src = `data:${res.image.mime};base64,${res.image.data}`;
 
           // audio play
-          console.log("audio loaded")
-          audio.src = `data:${res.audio.mime};base64,${res.image.data}`;
-          console.log("audio played")
-          console.log(audio.src)
+          audio.src = `data:${res.audio.mime};base64,${res.audio.data}`;
           audio.play();
         });
       }
