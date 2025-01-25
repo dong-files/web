@@ -188,14 +188,6 @@ import Base from "../layouts/Base.astro";
       load_dong.audio.play();
     }
 
-    // if ("LaunchParams" in window && 'launchQueue' in window && 'files' in window.LaunchParams.prototype) {
-    //   window.launchQueue.setConsumer((launchParams) => {
-    //     if (launchParams.files && launchParams.files.length) {
-    //       handleFile(launchParams.files[0]);
-    //     }
-    //   });
-    // }
-
     if ("launchQueue" in window && "LaunchParams" in window) {
       (window as any).launchQueue.setConsumer(
         async (launchParams: { files: any[] }) => {
