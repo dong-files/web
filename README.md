@@ -1,3 +1,7 @@
+> [!CAUTION]
+> This repository has moved to <https://tangled.sh/@vielle.dev/dong-web>  
+> This code **may** be out of date.
+
 # Dong Web
 
 A PWA to read `.dong` files (see [working with dong](./work-with-dong.md) files for more info)  
